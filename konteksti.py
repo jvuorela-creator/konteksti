@@ -1,4 +1,5 @@
 import requests
+import streamlit
 from datetime import datetime
 
 def hae_aikalaislehdet(paivamaara_str):
@@ -64,4 +65,5 @@ def hae_aikalaislehdet(paivamaara_str):
 if __name__ == "__main__":
     # Kysytään käyttäjältä pvm
     syote = input("Anna päivämäärä (pp.kk.vvvv), esim. 21.11.1908: ")
+
     hae_aikalaislehdet(syote)
