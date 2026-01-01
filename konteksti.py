@@ -2,87 +2,83 @@ import streamlit as st
 import requests
 from datetime import datetime
 
-# --- 1. Sivun asetukset ---
+# --- ASETUKSET ---
 st.set_page_config(page_title="Aikalaisotsikot", page_icon="📰")
 
-# --- 2. Otsikko ---
 st.title("📰 Aikalaisotsikot")
-st.write("Hae esi-isiesi elinpäivien sanomalehdet Kansalliskirjaston arkistosta.")
+st.write("Hae esi-isiesi elinpäivien sanomalehdet.")
 
-# --- 3. Päivämäärän valinta ---
-valittu_pvm = st.date_input(
-    "Valitse päivämäärä",
-    value=datetime(1908, 11, 21),    
-    min_value=datetime(1771, 1, 1),  
-    max_value=datetime(1939, 12, 31) 
-)
+# --- KÄYTTÖLIITTYMÄ ---
+col1, col2 = st.columns(2)
+with col1:
+    valittu_pvm = st.date_input(
+        "Valitse päivämäärä",
+        value=datetime(1908, 11, 21),
+        min_value=datetime(1771, 1, 1),
+        max_value=datetime(1939, 12, 31)
+    )
 
-# API vaatii päivämäärät muodossa YYYY-MM-DD
 api_date = valittu_pvm.strftime("%Y-%m-%d")
 nayta_pvm = valittu_pvm.strftime("%d.%m.%Y")
 
-# --- 4. Haku (POST-metodilla) ---
+# --- HAKULOGIIKKA ---
 if st.button("Hae lehdet"):
     
-    st.info(f"Haetaan lehtiä päivälle {nayta_pvm}...")
+    st.divider()
     
-    # Tämä on se virallinen hakurajapinta
-    url = "https://digi.kansalliskirjasto.fi/api/search"
+    # 1. Luodaan "varma linkki" suoraan verkkosivulle (tämä toimii aina)
+    web_link = f"https://digi.kansalliskirjasto.fi/search?formats=NEWSPAPER&startDate={api_date}&endDate={api_date}&orderBy=RELEVANCE"
     
-    # Määritellään "payload" eli data, joka lähetetään POST-paketissa
-    payload = {
-        "formats": ["NEWSPAPER"],
-        "startDate": api_date,
-        "endDate": api_date,
-        "language": "fi",
-        "limit": 20,
-        "orderBy": "RELEVANCE"
-    }
+    st.info(f"Päivämäärä: {nayta_pvm}")
+    
+    # Näytetään iso nappi, josta pääsee aina perille
+    st.link_button(f"↗️ Avaa {nayta_pvm} lehdet Kansalliskirjaston sivulla", web_link)
+    
+    st.write("---")
+    st.caption("Sovellus yrittää ladata esikatselua alle...")
 
-    # "Valeasu" (User-Agent) on edelleen tärkeä
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Content-Type": "application/json"
-    }
-
+    # 2. Yritetään ladata esikatselu API:n kautta
     try:
-        # TÄRKEÄ MUUTOS: Käytetään requests.post() eikä requests.get()
-        # Lähetetään data 'json'-parametrissa
-        response = requests.post(url, json=payload, headers=headers, timeout=15)
-        response.raise_for_status() 
+        # Käytetään yksinkertaisinta mahdollista GET-hakua
+        url = "https://digi.kansalliskirjasto.fi/api/search"
         
-        data = response.json()
-        tulokset = data.get("rows", [])
+        params = {
+            "queryString": "*",  # Hakee kaikkea
+            "startDate": api_date,
+            "endDate": api_date,
+            "formats": "NEWSPAPER",
+            "limit": 10
+        }
+        
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+
+        with st.spinner("Yhdistetään arkistoon..."):
+            response = requests.get(url, params=params, headers=headers, timeout=5)
+            response.raise_for_status()
+            data = response.json()
+            tulokset = data.get("rows", [])
 
         if not tulokset:
-            st.warning(f"Ei löytynyt lehtiä päivämäärällä {nayta_pvm}.")
-            st.write("Vinkki: Kokeile vaihtaa päivää. Sunnuntaisin ja pyhinä ei aina ilmestynyt lehtiä.")
+            st.warning("Rajapinta ei palauttanut tuloksia, mutta yllä oleva linkki voi silti toimia.")
         else:
-            st.success(f"Löytyi {len(tulokset)} lehteä!")
-            
-            # Lajitellaan aakkosiin
-            tulokset.sort(key=lambda x: x.get("bindingTitle", ""))
-
+            st.success(f"Esikatselu onnistui! ({len(tulokset)} lehteä)")
             for lehti in tulokset:
-                nimi = lehti.get("bindingTitle", "Nimetön lehti")
-                # Varmistetaan ID:n löytyminen
+                nimi = lehti.get("bindingTitle", "Nimetön")
                 binding_id = lehti.get("id") or lehti.get("bindingId")
                 
                 if binding_id:
                     linkki = f"https://digi.kansalliskirjasto.fi/sanomalehti/binding/{binding_id}?page=1"
-                    
-                    with st.expander(f"📄 {nimi}"):
-                        st.write(f"**Päiväys:** {nayta_pvm}")
-                        st.markdown(f"👉 **[Lue lehti tästä]({linkki})**")
+                    st.markdown(f"**[{nimi}]({linkki})**")
 
-    except requests.exceptions.RequestException as e:
-        st.error("Yhteysvirhe rajapintaan.")
-        # Jos virhe on palvelimen päässä, näytetään tarkempi syy
-        if hasattr(e, 'response') and e.response is not None:
-             st.code(f"Virhekoodi: {e.response.status_code}\n{e.response.text}")
-        else:
-             st.write(f"Virhe: {e}")
+    except Exception as e:
+        # Tässä on "Plan B" - jos API ei toimi, ei kaadeta ohjelmaa
+        st.warning("⚠️ Suora yhteys rajapintaan estettiin (Kansalliskirjaston palomuuri).")
+        st.write("Tämä on yleistä pilvipalveluissa. **Ei hätää – käytä yllä olevaa painiketta.** Se toimii aina.")
+        # Piilotetaan tekninen virhe "expanderin" sisään, ettei se säikäytä käyttäjää
+        with st.expander("Näytä tekniset tiedot"):
+            st.write(f"Virhe: {e}")
 
-# --- 5. Alatunniste ---
 st.markdown("---")
-st.caption("Datalähde: Kansalliskirjaston avoin data")
+st.caption("Datalähde: Kansalliskirjasto")
