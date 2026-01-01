@@ -22,11 +22,11 @@ api_date = valittu_pvm.strftime("%Y-%m-%d")
 nayta_pvm = valittu_pvm.strftime("%d.%m.%Y")
 
 # --- Haku-nappi ja logiikka ---
+# --- Haku-nappi ja logiikka ---
 if st.button("Hae lehdet"):
     
     st.info(f"Haetaan lehtiä päivälle {nayta_pvm}...")
     
-    # Kansalliskirjaston API
     url = "https://digi.kansalliskirjasto.fi/api/search"
     
     params = {
@@ -34,15 +34,24 @@ if st.button("Hae lehdet"):
         "endDate": api_date,
         "formats": "NEWSPAPER",
         "language": "fi", 
-        "limit": 10, # Näytetään max 10 tulosta
+        "limit": 10,
         "orderBy": "RELEVANCE"
     }
 
+    # TÄMÄ ON UUSI OSA: Huijataan palvelinta luulemaan meitä selaimeksi
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+
     try:
-        response = requests.get(url, params=params)
+        # Lisätään headers pyyntöön
+        response = requests.get(url, params=params, headers=headers, timeout=10)
         response.raise_for_status()
+        
         data = response.json()
         tulokset = data.get("rows", [])
+        
+        # ... loppu koodi pysyy samana ...
 
         if not tulokset:
             st.warning("Ei löytynyt lehtiä tälle päivälle. Kokeile toista päivää tai tarkista onko päivä sunnuntai/pyhä.")
@@ -69,3 +78,4 @@ if st.button("Hae lehdet"):
 # --- Alatunniste ---
 st.markdown("---")
 st.caption("Datalähde: Kansalliskirjaston avoin data (digi.kansalliskirjasto.fi)")
+
