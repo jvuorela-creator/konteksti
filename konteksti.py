@@ -1,84 +1,120 @@
-import streamlit as st
-import requests
-from datetime import datetime
+import datetime
 
-# --- ASETUKSET ---
-st.set_page_config(page_title="Aikalaisotsikot", page_icon="📰")
-
-st.title("📰 Aikalaisotsikot")
-st.write("Hae esi-isiesi elinpäivien sanomalehdet.")
-
-# --- KÄYTTÖLIITTYMÄ ---
-col1, col2 = st.columns(2)
-with col1:
-    valittu_pvm = st.date_input(
-        "Valitse päivämäärä",
-        value=datetime(1908, 11, 21),
-        min_value=datetime(1771, 1, 1),
-        max_value=datetime(1939, 12, 31)
-    )
-
-api_date = valittu_pvm.strftime("%Y-%m-%d")
-nayta_pvm = valittu_pvm.strftime("%d.%m.%Y")
-
-# --- HAKULOGIIKKA ---
-if st.button("Hae lehdet"):
-    
-    st.divider()
-    
-    # 1. Luodaan "varma linkki" suoraan verkkosivulle (tämä toimii aina)
-    web_link = f"https://digi.kansalliskirjasto.fi/search?formats=NEWSPAPER&startDate={api_date}&endDate={api_date}&orderBy=RELEVANCE"
-    
-    st.info(f"Päivämäärä: {nayta_pvm}")
-    
-    # Näytetään iso nappi, josta pääsee aina perille
-    st.link_button(f"↗️ Avaa {nayta_pvm} lehdet Kansalliskirjaston sivulla", web_link)
-    
-    st.write("---")
-    st.caption("Sovellus yrittää ladata esikatselua alle...")
-
-    # 2. Yritetään ladata esikatselu API:n kautta
-    try:
-        # Käytetään yksinkertaisinta mahdollista GET-hakua
-        url = "https://digi.kansalliskirjasto.fi/api/search"
+class ElamanRaamit:
+    def __init__(self):
+        # Yksinkertaistettu "tietokanta" Suomen historian aikakausista
+        self.aikakaudet = [
+            (1809, 1916, "Autonomian aika (Venäjän vallan alla)", "Suomi oli suuriruhtinaskunta. Elämä oli pääosin maatalousvaltaista, ja sääty-yhteiskunta oli voimissaan."),
+            (1917, 1918, "Itsenäistyminen ja sisällissota", "Suomi itsenäistyi, mutta ajautui veriseen sisällissotaan. Yhteiskunta oli syvästi jakautunut."),
+            (1919, 1938, "Nuori tasavalta ja eheytyminen", "Suomi rakensi tasavaltaista hallintoa. 1930-luvun pula-aika koetteli, mutta elintaso alkoi nousta."),
+            (1939, 1945, "Sotavuodet (Talvi- ja jatkosota)", "Koko kansakunta oli valjastettu maanpuolustukseen. Säännöstely, evakot ja rintamaelämä koskettivat jokaista."),
+            (1946, 1955, "Jälleenrakennus ja sotakorvaukset", "Ankara työnteon aika. Rintamamiestalot nousivat ja teollisuus kasvoi sotakorvausten vauhdittamana."),
+            (1956, 1969, "Rakennemuutos ja maaltamuutto", "Suomi alkoi kaupungistua vauhdilla. Hyvinvointivaltion perusteita luotiin."),
+            (1970, 1990, "Hyvinvointivaltion nousu", "Elintaso nousi kohisten. Peruskoulu, terveyskeskukset ja lähiöt tulivat osaksi arkea."),
+            (1991, 1999, "Lama ja EU-aika", "Syvä taloudellinen lama, jota seurasi nousu ja liittyminen Euroopan Unioniin."),
+            (2000, 2025, "Digitaalinen aika", "Tietoyhteiskunta ja globalisaatio.")
+        ]
         
-        params = {
-            "queryString": "*",  # Hakee kaikkea
-            "startDate": api_date,
-            "endDate": api_date,
-            "formats": "NEWSPAPER",
-            "limit": 10
-        }
-        
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        # Suomen valtionpäämiehet
+        self.johtajat = {
+            1881: "Keisari Aleksanteri III",
+            1894: "Keisari Nikolai II",
+            1917: "Itsenäistymisvaihe (Svinhufvud senaatin pj)",
+            1919: "Presidentti K.J. Ståhlberg",
+            1925: "Presidentti L.K. Relander",
+            1931: "Presidentti P.E. Svinhufvud",
+            1937: "Presidentti Kyösti Kallio",
+            1940: "Presidentti Risto Ryti",
+            1944: "Presidentti C.G.E. Mannerheim",
+            1946: "Presidentti J.K. Paasikivi",
+            1956: "Presidentti Urho Kekkonen",
+            1982: "Presidentti Mauno Koivisto",
+            1994: "Presidentti Martti Ahtisaari",
+            2000: "Presidentti Tarja Halonen",
+            2012: "Presidentti Sauli Niinistö",
+            2024: "Presidentti Alexander Stubb"
         }
 
-        with st.spinner("Yhdistetään arkistoon..."):
-            response = requests.get(url, params=params, headers=headers, timeout=5)
-            response.raise_for_status()
-            data = response.json()
-            tulokset = data.get("rows", [])
+    def hae_johtaja(self, vuosi):
+        # Etsii kuka oli vallassa kyseisenä vuonna
+        viimeisin_johtaja = "Tuntematon"
+        for aloitusvuosi, nimi in sorted(self.johtajat.items()):
+            if vuosi >= aloitusvuosi:
+                viimeisin_johtaja = nimi
+            else:
+                break
+        return viimeisin_johtaja
 
-        if not tulokset:
-            st.warning("Rajapinta ei palauttanut tuloksia, mutta yllä oleva linkki voi silti toimia.")
+    def hae_konteksti(self, vuosi):
+        for start, end, nimi, kuvaus in self.aikakaudet:
+            if start <= vuosi <= end:
+                return f"{nimi}. {kuvaus}"
+        return "Määrittelemätön historiallinen aika."
+
+    def luo_raportti(self, syntyma, kuolema):
+        ika = kuolema - syntyma
+        
+        print(f"\n{'='*60}")
+        print(f"HISTORIALLINEN KONTEKSTI: {syntyma}–{kuolema}")
+        print(f"Henkilö eli {ika}-vuotiaaksi.")
+        print(f"{'='*60}\n")
+
+        # 1. SYNTYMÄHETKI
+        print(f"--- SYNTYMÄVUOSI {syntyma} ---")
+        print(f"Hallitsija: {self.hae_johtaja(syntyma)}")
+        print(f"Aikakausi: {self.hae_konteksti(syntyma)}")
+        print("")
+
+        # 2. LAPSUUS JA NUORUUS (Ikä 0-20)
+        nuoruus_loppuu = syntyma + 20
+        if nuoruus_loppuu > kuolema: nuoruus_loppuu = kuolema
+        
+        print(f"--- NUORUUS ({syntyma}-{nuoruus_loppuu}) ---")
+        # Tarkistetaan, osuiko suuria tapahtumia nuoruuteen
+        tapahtumat = []
+        if syntyma <= 1917 <= nuoruus_loppuu:
+            tapahtumat.append(f"Henkilö oli {1917-syntyma}-vuotias Suomen itsenäistyessä.")
+        if syntyma <= 1939 <= nuoruus_loppuu:
+             tapahtumat.append(f"Henkilö oli {1939-syntyma}-vuotias Talvisodan syttyessä.")
+        
+        if tapahtumat:
+            for t in tapahtumat:
+                print(f"* {t}")
         else:
-            st.success(f"Esikatselu onnistui! ({len(tulokset)} lehteä)")
-            for lehti in tulokset:
-                nimi = lehti.get("bindingTitle", "Nimetön")
-                binding_id = lehti.get("id") or lehti.get("bindingId")
-                
-                if binding_id:
-                    linkki = f"https://digi.kansalliskirjasto.fi/sanomalehti/binding/{binding_id}?page=1"
-                    st.markdown(f"**[{nimi}]({linkki})**")
+            print(f"Henkilö varttui aikana: {self.hae_konteksti(syntyma + 10)}")
+        print("")
 
-    except Exception as e:
-        # Tässä on "Plan B" - jos API ei toimi, ei kaadeta ohjelmaa
-        st.warning("⚠️ Suora yhteys rajapintaan estettiin (Kansalliskirjaston palomuuri).")
-        st.write("Tämä on yleistä pilvipalveluissa. **Ei hätää – käytä yllä olevaa painiketta.** Se toimii aina.")
-        # Piilotetaan tekninen virhe "expanderin" sisään, ettei se säikäytä käyttäjää
-        with st.expander("Näytä tekniset tiedot"):
-            st.write(f"Virhe: {e}")
+        # 3. AIKUISUUS
+        if ika > 20:
+            keski_ika = syntyma + 40
+            if keski_ika > kuolema: keski_ika = kuolema
+            print(f"--- AIKUISUUS JA TYÖIKÄ (n. {nuoruus_loppuu}-{keski_ika}) ---")
+            print(f"Yhteiskunnallinen tilanne: {self.hae_konteksti(keski_ika)}")
+            print(f"Valtionpäämies 40-vuotispäivänä: {self.hae_johtaja(syntyma+40) if syntyma+40 <= kuolema else 'Ei ehtinyt täyttää'}")
+            print("")
 
-st.markdown("---")
-st.caption("Datalähde: Kansalliskirjasto")
+        # 4. KUOLINVUOSI
+        print(f"--- KUOLINVUOSI {kuolema} ---")
+        print(f"Henkilö kuoli {ika}-vuotiaana.")
+        print(f"Hallitsija: {self.hae_johtaja(kuolema)}")
+        print(f"Suomi kuolinhetkellä: {self.hae_konteksti(kuolema)}")
+        print(f"{'='*60}\n")
+
+# --- KÄYTTÖLIITTYMÄ (Simulaatio) ---
+
+def main():
+    print("ELÄMÄN RAAMIT - Sukututkijan apuri")
+    print("Syötä henkilön tiedot:")
+    
+    try:
+        s_vuosi = int(input("Syntymävuosi: "))
+        k_vuosi = int(input("Kuolinvuosi: "))
+        
+        app = ElamanRaamit()
+        app.luo_raportti(s_vuosi, k_vuosi)
+        
+    except ValueError:
+        print("Virhe: Syötä vuosiluvut numeroina.")
+
+if __name__ == "__main__":
+    main()
