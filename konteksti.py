@@ -1,120 +1,47 @@
-import datetime
-
-class ElamanRaamit:
+class AgraariAnalysaattori:
     def __init__(self):
-        # Yksinkertaistettu "tietokanta" Suomen historian aikakausista
-        self.aikakaudet = [
-            (1809, 1916, "Autonomian aika (Venäjän vallan alla)", "Suomi oli suuriruhtinaskunta. Elämä oli pääosin maatalousvaltaista, ja sääty-yhteiskunta oli voimissaan."),
-            (1917, 1918, "Itsenäistyminen ja sisällissota", "Suomi itsenäistyi, mutta ajautui veriseen sisällissotaan. Yhteiskunta oli syvästi jakautunut."),
-            (1919, 1938, "Nuori tasavalta ja eheytyminen", "Suomi rakensi tasavaltaista hallintoa. 1930-luvun pula-aika koetteli, mutta elintaso alkoi nousta."),
-            (1939, 1945, "Sotavuodet (Talvi- ja jatkosota)", "Koko kansakunta oli valjastettu maanpuolustukseen. Säännöstely, evakot ja rintamaelämä koskettivat jokaista."),
-            (1946, 1955, "Jälleenrakennus ja sotakorvaukset", "Ankara työnteon aika. Rintamamiestalot nousivat ja teollisuus kasvoi sotakorvausten vauhdittamana."),
-            (1956, 1969, "Rakennemuutos ja maaltamuutto", "Suomi alkoi kaupungistua vauhdilla. Hyvinvointivaltion perusteita luotiin."),
-            (1970, 1990, "Hyvinvointivaltion nousu", "Elintaso nousi kohisten. Peruskoulu, terveyskeskukset ja lähiöt tulivat osaksi arkea."),
-            (1991, 1999, "Lama ja EU-aika", "Syvä taloudellinen lama, jota seurasi nousu ja liittyminen Euroopan Unioniin."),
-            (2000, 2025, "Digitaalinen aika", "Tietoyhteiskunta ja globalisaatio.")
-        ]
-        
-        # Suomen valtionpäämiehet
-        self.johtajat = {
-            1881: "Keisari Aleksanteri III",
-            1894: "Keisari Nikolai II",
-            1917: "Itsenäistymisvaihe (Svinhufvud senaatin pj)",
-            1919: "Presidentti K.J. Ståhlberg",
-            1925: "Presidentti L.K. Relander",
-            1931: "Presidentti P.E. Svinhufvud",
-            1937: "Presidentti Kyösti Kallio",
-            1940: "Presidentti Risto Ryti",
-            1944: "Presidentti C.G.E. Mannerheim",
-            1946: "Presidentti J.K. Paasikivi",
-            1956: "Presidentti Urho Kekkonen",
-            1982: "Presidentti Mauno Koivisto",
-            1994: "Presidentti Martti Ahtisaari",
-            2000: "Presidentti Tarja Halonen",
-            2012: "Presidentti Sauli Niinistö",
-            2024: "Presidentti Alexander Stubb"
+        # Tietokanta: Vuosi -> {Sää, Sato, Sosiaalinen vaikutus}
+        # Lähteet: Historiallinen maataloustilasto, Ilmatieteen laitos, historiankirjoitus
+        self.historia_data = {
+            1862: {"sää": "Viileä kesä.", "sato": "Huono sato Pohjois- ja Itä-Suomessa.", "vaikutus": "Paikallista nälänhätää, velkaantumista."},
+            1866: {"sää": "Erittäin sateinen kesä, peruna mätäni peltoon.", "sato": "Katovuosi.", "vaikutus": "Talven varastot jäivät tyhjiksi. Nälänhädän alkusoitto."},
+            1867: {"sää": "Kylmin tunnettu vuosi. Jäät lähtivät kesäkuussa. Syyskuun 3. päivän halla tuhosi viljan.", "sato": "Täydellinen kato koko maassa.", "vaikutus": "Suuret nälkävuodet. Kerjuulaumat liikkeellä, pilkkukuume levisi. 8% väestöstä kuoli."},
+            1868: {"sää": "Lämmin kesä.", "sato": "Sato onnistui vihdoin.", "vaikutus": "Väestö alkoi toipua, mutta taudit tappoivat yhä heikkokuntoisia keväällä."},
+            1892: {"sää": "Kylmä ja sateinen syksy.", "sato": "Ruis- ja perunasato epäonnistui.", "vaikutus": "Viimeinen rauhanajan nälkäkriisi. Kruunu jakoi hätäapua."},
+            1899: {"sää": "Kuiva kesä.", "sato": "Heinäsato heikko.", "vaikutus": "Karjaa jouduttiin teurastamaan rehun puutteessa."},
+            1902: {"sää": "Kylmä kevät, sateinen kesä.", "sato": "Paha katovuosi ( ns. 'pasuunavuosi').", "vaikutus": "Laukaisi valtavan siirtolaisallon Amerikkaan. Maaseudun köyhälistö ahdingossa."},
+            1917: {"sää": "Kohtalainen sää.", "sato": "Sato keskinkertainen, mutta tuonti katkesi.", "vaikutus": "Maailmansota ja Venäjän sekasorto estivät viljan tuonnin. Elintarvikepula johti levottomuuksiin ja lakkoihin."},
+            1918: {"sää": "Kevät myöhässä.", "sato": "Kylvöt viivästyivät sodan takia.", "vaikutus": "Sisällissota esti maataloustyöt monin paikoin. Espanjantauti iski syksyllä aliravittuun kansaan."},
+            1928: {"sää": "Sateinen syksy, vaikea korjuusää.", "sato": "Kato, vilja heikkolaatuista.", "vaikutus": "Johti maatalousvaltaisen talouden taantumaan jo ennen 1930-luvun suurta lamaa. Pakkohuutokaupat yleistyivät."}
         }
 
-    def hae_johtaja(self, vuosi):
-        # Etsii kuka oli vallassa kyseisenä vuonna
-        viimeisin_johtaja = "Tuntematon"
-        for aloitusvuosi, nimi in sorted(self.johtajat.items()):
-            if vuosi >= aloitusvuosi:
-                viimeisin_johtaja = nimi
-            else:
-                break
-        return viimeisin_johtaja
-
-    def hae_konteksti(self, vuosi):
-        for start, end, nimi, kuvaus in self.aikakaudet:
-            if start <= vuosi <= end:
-                return f"{nimi}. {kuvaus}"
-        return "Määrittelemätön historiallinen aika."
-
-    def luo_raportti(self, syntyma, kuolema):
-        ika = kuolema - syntyma
+    def analysoi_tapahtuma(self, vuosi, tapahtuma_tyyppi="kuolema"):
+        print(f"--- ANALYYSI VUODELTA {vuosi} ({tapahtuma_tyyppi.upper()}) ---")
         
-        print(f"\n{'='*60}")
-        print(f"HISTORIALLINEN KONTEKSTI: {syntyma}–{kuolema}")
-        print(f"Henkilö eli {ika}-vuotiaaksi.")
-        print(f"{'='*60}\n")
-
-        # 1. SYNTYMÄHETKI
-        print(f"--- SYNTYMÄVUOSI {syntyma} ---")
-        print(f"Hallitsija: {self.hae_johtaja(syntyma)}")
-        print(f"Aikakausi: {self.hae_konteksti(syntyma)}")
-        print("")
-
-        # 2. LAPSUUS JA NUORUUS (Ikä 0-20)
-        nuoruus_loppuu = syntyma + 20
-        if nuoruus_loppuu > kuolema: nuoruus_loppuu = kuolema
-        
-        print(f"--- NUORUUS ({syntyma}-{nuoruus_loppuu}) ---")
-        # Tarkistetaan, osuiko suuria tapahtumia nuoruuteen
-        tapahtumat = []
-        if syntyma <= 1917 <= nuoruus_loppuu:
-            tapahtumat.append(f"Henkilö oli {1917-syntyma}-vuotias Suomen itsenäistyessä.")
-        if syntyma <= 1939 <= nuoruus_loppuu:
-             tapahtumat.append(f"Henkilö oli {1939-syntyma}-vuotias Talvisodan syttyessä.")
-        
-        if tapahtumat:
-            for t in tapahtumat:
-                print(f"* {t}")
+        # 1. Tarkistetaan kyseinen vuosi
+        if vuosi in self.historia_data:
+            data = self.historia_data[vuosi]
+            print(f"🌡️ SÄÄOLOSUHTEET: {data['sää']}")
+            print(f"🌾 SADON LAATU: {data['sato']}")
+            print(f"📉 YHTEISKUNNALLINEN VAIKUTUS: {data['vaikutus']}")
         else:
-            print(f"Henkilö varttui aikana: {self.hae_konteksti(syntyma + 10)}")
-        print("")
+            print(f"Ei merkittävää valtakunnallista katastrofia vuonna {vuosi}. Elämä oli todennäköisesti normaalia agraariarkea.")
 
-        # 3. AIKUISUUS
-        if ika > 20:
-            keski_ika = syntyma + 40
-            if keski_ika > kuolema: keski_ika = kuolema
-            print(f"--- AIKUISUUS JA TYÖIKÄ (n. {nuoruus_loppuu}-{keski_ika}) ---")
-            print(f"Yhteiskunnallinen tilanne: {self.hae_konteksti(keski_ika)}")
-            print(f"Valtionpäämies 40-vuotispäivänä: {self.hae_johtaja(syntyma+40) if syntyma+40 <= kuolema else 'Ei ehtinyt täyttää'}")
-            print("")
+        # 2. Tarkistetaan EDELLINEN vuosi (erityisen tärkeä kuolemantapauksissa kevättalvella)
+        prev_year = vuosi - 1
+        if prev_year in self.historia_data:
+            print(f"\n⚠️ HUOMIOITAVAA EDELLISELTÄ VUODELTA ({prev_year}):")
+            print(f"Edellisen vuoden sato ({self.historia_data[prev_year]['sato']}) vaikutti suoraan tämän vuoden ruokavarantoihin.")
+            if "nälkä" in self.historia_data[prev_year]['vaikutus'] or "Kato" in self.historia_data[prev_year]['sato']:
+                print("-> MAHDOLLINEN KUOLINSYY-KONTEKSTI: Aliravitsemus tai sen heikentämä vastustuskyky taudeille.")
 
-        # 4. KUOLINVUOSI
-        print(f"--- KUOLINVUOSI {kuolema} ---")
-        print(f"Henkilö kuoli {ika}-vuotiaana.")
-        print(f"Hallitsija: {self.hae_johtaja(kuolema)}")
-        print(f"Suomi kuolinhetkellä: {self.hae_konteksti(kuolema)}")
-        print(f"{'='*60}\n")
+        print("-" * 60)
 
-# --- KÄYTTÖLIITTYMÄ (Simulaatio) ---
+# --- SIMULAATIO ---
+# Kuvitellaan tilanne: Sukututkija tutkii henkilöä, joka kuoli keväällä 1868.
+app = AgraariAnalysaattori()
+app.analysoi_tapahtuma(1868, "kuolema")
 
-def main():
-    print("ELÄMÄN RAAMIT - Sukututkijan apuri")
-    print("Syötä henkilön tiedot:")
-    
-    try:
-        s_vuosi = int(input("Syntymävuosi: "))
-        k_vuosi = int(input("Kuolinvuosi: "))
-        
-        app = ElamanRaamit()
-        app.luo_raportti(s_vuosi, k_vuosi)
-        
-    except ValueError:
-        print("Virhe: Syötä vuosiluvut numeroina.")
-
-if __name__ == "__main__":
-    main()
+# Kuvitellaan tilanne: Perhe muutti Amerikkaan 1903.
+print("\n")
+app.analysoi_tapahtuma(1902, "muutto")
